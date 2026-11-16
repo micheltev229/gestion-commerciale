@@ -260,6 +260,7 @@ def accueil():
         "nb_ventes": totaux["nb_ventes"],
         "panier": ca / totaux["nb_ventes"] if totaux["nb_ventes"] else 0,
         "valeur_stock": sum(float(s["stock"]) * float(s["cmup"] or 0) for s in stocks),
+        "alertes": sum(1 for s in stocks if s["stock"] <= 5),
     }
 
     mois = query(

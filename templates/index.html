@@ -22,10 +22,11 @@
   ("Achats", kpi.achats | fcfa, "Valeur des approvisionnements"),
   ("Trésorerie nette", kpi.tresorerie | fcfa, "Ventes moins achats et dépenses"),
   ("Valeur du stock", kpi.valeur_stock | fcfa, "Stock restant valorisé au CMUP"),
+  ("À réapprovisionner", kpi.alertes ~ " produit(s)", "Stock inférieur ou égal à 5 unités"),
 ] %}
 <div class="row g-3 mb-4">
   {% for titre, valeur, note in cartes %}
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-lg-3">
     <div class="card p-3 h-100">
       <div class="text-secondary small">{{ titre }}</div>
       <div class="fs-4 fw-light">{{ valeur }}</div>
@@ -39,13 +40,13 @@
   <div class="col-lg-8">
     <div class="card p-4 h-100">
       <h5>Évolution mensuelle</h5>
-      <canvas id="graphMois" height="140"></canvas>
+      <div style="height: 300px"><canvas id="graphMois"></canvas></div>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card p-4 h-100">
       <h5>Chiffre d'affaires par catégorie</h5>
-      <canvas id="graphCat"></canvas>
+      <div style="height: 300px"><canvas id="graphCat"></canvas></div>
     </div>
   </div>
 </div>
@@ -89,6 +90,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
   const g = {{ graph | tojson }};
+  const fr = v => v.toLocaleString("fr-FR");
   new Chart(document.getElementById("graphMois"), {
     type: "bar",
     data: { labels: g.mois, datasets: [
@@ -96,13 +98,14 @@
       { label: "Achats", data: g.achats, backgroundColor: "#9DB4D6" },
       { label: "Dépenses", data: g.depenses, backgroundColor: "#E8A33D" }
     ] },
-    options: { plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true } } }
+    options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true, ticks: { callback: fr } } } }
   });
   new Chart(document.getElementById("graphCat"), {
     type: "doughnut",
     data: { labels: g.cat_libelles, datasets: [{ data: g.cat_ca,
       backgroundColor: ["#1B3A6B", "#0078D4", "#5AA7E8", "#9DB4D6", "#E8A33D", "#6B8E23"] }] },
-    options: { plugins: { legend: { position: "bottom" } } }
+    options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
   });
 </script>
 {% endblock %}
