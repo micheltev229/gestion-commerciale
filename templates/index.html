@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block contenu %}
+<h1 class="mb-1">Bienvenue</h1>
+<p class="text-secondary mb-4">Suivi des catégories et des produits d'un commerce du secteur informel.</p>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card p-4">
+      <div class="text-secondary">Catégories</div>
+      <div class="display-6">{{ stats.nb_categories }}</div>
+      <a href="{{ url_for('categories') }}" class="stretched-link"></a>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-4">
+      <div class="text-secondary">Produits</div>
+      <div class="display-6">{{ stats.nb_produits }}</div>
+      <a href="{{ url_for('produits') }}" class="stretched-link"></a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titre %}{{ "Modifier" if produit else "Ajouter" }} un produit{% endblock %}
+{% block contenu %}
+<h1 class="mb-4">{{ "Modifier le produit n° " ~ produit.id_produit if produit else "Nouveau produit" }}</h1>
+{% if not categories %}
+  <div class="alert alert-warning">Créez d'abord une <a href="{{ url_for('categories') }}">catégorie</a>.</div>
+{% else %}
+<div class="card p-4" style="max-width: 620px">
+  <form method="post">
+    <label class="form-label">Désignation</label>
+    <input class="form-control mb-3" name="designation" maxlength="150" required
+           value="{{ request.form.designation or (produit.designation if produit else '') }}">
+    <label class="form-label">Prix de vente (FCFA)</label>
+    <input class="form-control mb-3" name="prix_vente" type="number" min="0" step="1" required
+           value="{{ request.form.prix_vente or (produit.prix_vente | int if produit else '') }}">
+    <label class="form-label">Catégorie</label>
+    <select class="form-select mb-4" name="id_categorie" required>
+      <option value="">Choisir...</option>
+      {% for c in categories %}
+        <option value="{{ c.id_categorie }}" {{ "selected" if produit and produit.id_categorie == c.id_categorie }}>{{ c.libelle }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary">Enregistrer</button>
+    <a class="btn btn-link" href="{{ url_for('produits') }}">Annuler</a>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
