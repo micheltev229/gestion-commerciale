@@ -1,21 +1,108 @@
 {% extends "base.html" %}
+{% block titre %}Tableau de bord{% endblock %}
 {% block contenu %}
-<h1 class="mb-1">Bienvenue</h1>
-<p class="text-secondary mb-4">Suivi des catégories et des produits d'un commerce du secteur informel.</p>
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card p-4">
-      <div class="text-secondary">Catégories</div>
-      <div class="display-6">{{ stats.nb_categories }}</div>
-      <a href="{{ url_for('categories') }}" class="stretched-link"></a>
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div>
+    <h1 class="mb-1">Tableau de bord</h1>
+    <p class="text-secondary mb-0">{{ "Du " ~ debut ~ " au " ~ fin if debut or fin else "Toute la période enregistrée" }}</p>
+  </div>
+  <form class="d-flex gap-2 align-items-end" method="get">
+    <div><label class="form-label small mb-0">Début</label><input type="date" class="form-control form-control-sm" name="debut" value="{{ debut }}"></div>
+    <div><label class="form-label small mb-0">Fin</label><input type="date" class="form-control form-control-sm" name="fin" value="{{ fin }}"></div>
+    <button class="btn btn-sm btn-primary">Filtrer</button>
+    <a class="btn btn-sm btn-link" href="{{ url_for('accueil') }}">Tout</a>
+  </form>
+</div>
+
+{% set cartes = [
+  ("Chiffre d'affaires", kpi.ca | fcfa, kpi.nb_ventes ~ " ventes, panier moyen " ~ (kpi.panier | fcfa)),
+  ("Marge brute", kpi.marge | fcfa, "Taux de marge : " ~ ("%.1f" | format(kpi.taux_marge) | replace(".", ",")) ~ " %"),
+  ("Dépenses", kpi.depenses | fcfa, "Charges courantes de la période"),
+  ("Résultat", kpi.resultat | fcfa, "Marge brute moins dépenses"),
+  ("Achats", kpi.achats | fcfa, "Valeur des approvisionnements"),
+  ("Trésorerie nette", kpi.tresorerie | fcfa, "Ventes moins achats et dépenses"),
+  ("Valeur du stock", kpi.valeur_stock | fcfa, "Stock restant valorisé au CMUP"),
+] %}
+<div class="row g-3 mb-4">
+  {% for titre, valeur, note in cartes %}
+  <div class="col-sm-6 col-xl-3">
+    <div class="card p-3 h-100">
+      <div class="text-secondary small">{{ titre }}</div>
+      <div class="fs-4 fw-light">{{ valeur }}</div>
+      <div class="text-secondary small">{{ note }}</div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="card p-4">
-      <div class="text-secondary">Produits</div>
-      <div class="display-6">{{ stats.nb_produits }}</div>
-      <a href="{{ url_for('produits') }}" class="stretched-link"></a>
+  {% endfor %}
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card p-4 h-100">
+      <h5>Évolution mensuelle</h5>
+      <canvas id="graphMois" height="140"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-4 h-100">
+      <h5>Chiffre d'affaires par catégorie</h5>
+      <canvas id="graphCat"></canvas>
     </div>
   </div>
 </div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card p-0 h-100">
+      <h5 class="p-4 pb-2 mb-0">Top 5 des produits</h5>
+      <table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th class="ps-4">Produit</th><th class="text-end">Qté</th><th class="text-end">CA</th><th class="text-end pe-4">Marge</th></tr></thead>
+        <tbody>
+        {% for t in top %}
+          <tr><td class="ps-4">{{ t.designation }}</td><td class="text-end">{{ t.qte }}</td><td class="text-end">{{ t.ca | fcfa }}</td><td class="text-end pe-4">{{ t.marge | fcfa }}</td></tr>
+        {% else %}
+          <tr><td colspan="4" class="text-center text-secondary py-4">Aucune vente sur la période.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-0 h-100">
+      <h5 class="p-4 pb-2 mb-0">État des stocks</h5>
+      <table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th class="ps-4">Produit</th><th class="text-end">Entrées</th><th class="text-end">Sorties</th><th class="text-end pe-4">Stock</th></tr></thead>
+        <tbody>
+        {% for s in stocks %}
+          <tr>
+            <td class="ps-4">{{ s.designation }}</td><td class="text-end">{{ s.entrees }}</td><td class="text-end">{{ s.sorties }}</td>
+            <td class="text-end pe-4"><span class="badge {{ 'text-bg-danger' if s.stock <= 0 else 'text-bg-warning' if s.stock <= 5 else 'text-bg-success' }}">{{ s.stock }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const g = {{ graph | tojson }};
+  new Chart(document.getElementById("graphMois"), {
+    type: "bar",
+    data: { labels: g.mois, datasets: [
+      { label: "Ventes", data: g.ca, backgroundColor: "#0078D4" },
+      { label: "Achats", data: g.achats, backgroundColor: "#9DB4D6" },
+      { label: "Dépenses", data: g.depenses, backgroundColor: "#E8A33D" }
+    ] },
+    options: { plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true } } }
+  });
+  new Chart(document.getElementById("graphCat"), {
+    type: "doughnut",
+    data: { labels: g.cat_libelles, datasets: [{ data: g.cat_ca,
+      backgroundColor: ["#1B3A6B", "#0078D4", "#5AA7E8", "#9DB4D6", "#E8A33D", "#6B8E23"] }] },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+</script>
 {% endblock %}

@@ -24,8 +24,13 @@
     </button>
     <div class="collapse navbar-collapse" id="menu">
       <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('accueil') }}">Tableau de bord</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('categories') }}">Catégories</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('produits') }}">Produits</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('approvisionnements') }}">Approvisionnements</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('ventes') }}">Ventes</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('depenses') }}">Dépenses</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('journal') }}">Journal</a></li>
       </ul>
     </div>
   </div>
